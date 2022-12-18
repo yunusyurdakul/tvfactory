@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FactoryServiceImpl implements FactoryService {
     private AtomicInteger balance = new AtomicInteger(0);
     private AtomicInteger robotCount = new AtomicInteger(2);
-    private AtomicInteger totalSoldTvCount = new AtomicInteger(0);
+    private AtomicInteger totalTvCount = new AtomicInteger(0);
     private Queue<Robot> robots = new ConcurrentLinkedQueue<>();
     private Queue<Panel> panels = new ConcurrentLinkedQueue<>();
     private Queue<MainBoard> mainBoards = new ConcurrentLinkedQueue<>();
@@ -34,16 +35,14 @@ public class FactoryServiceImpl implements FactoryService {
     @Override
     public FactoryResultDto startProduction() {
         this.initFactory();
-        final ForkJoinPool productionThreadPool = new ForkJoinPool();
+        final ForkJoinPool productionThreadPool = (ForkJoinPool) Executors.newWorkStealingPool(30);
         while (robotCount.get() < 30) {
             final Robot robot = robots.poll();
-            if (televisions.size() >= 5) {
-                productionThreadPool.submit(() -> {
-                    sellTv();
-                });
-            }
             if (Objects.nonNull(robot)) {
                 productionThreadPool.submit(() -> {
+                    if (televisions.size() >= 5) {
+                        this.sellTv(robot);
+                    }
                     this.assembleTv(robot);
                     this.producePanels(robot);
                     this.produceMainBoard(robot);
@@ -54,7 +53,7 @@ public class FactoryServiceImpl implements FactoryService {
         }
         productionThreadPool.shutdownNow();
         return FactoryResultDto.builder()
-                .totalSoldTvCount(totalSoldTvCount.get())
+                .totalTvCount(totalTvCount.get())
                 .finalBalance(balance.get())
                 .robotCount(robotCount.get())
                 .build();
@@ -81,6 +80,7 @@ public class FactoryServiceImpl implements FactoryService {
             final Television television = robot.assembleTv(panels.poll(), mainBoard);
             if (Objects.nonNull(television)) {
                 televisions.add(television);
+                totalTvCount.getAndAdd(1);
                 log.info("A TV is assembled");
             } else {
                 log.info("TV is not assembled, the main board is returned.");
@@ -97,36 +97,41 @@ public class FactoryServiceImpl implements FactoryService {
 
 
     @SneakyThrows
-    private void sellTv() {
+    private void sellTv(Robot robot) {
         int tvCount = 0;
         while (tvCount < 5 && Objects.nonNull(televisions.poll())) {
             tvCount++;
         }
         if (tvCount > 0) {
+            robot.changeStatus(RobotStatus.SELL_TV);
             Thread.sleep(10 * 1000);
-            totalSoldTvCount.getAndAdd(tvCount);
-            balance.getAndAdd(tvCount);
+            final int currentBalance = balance.getAndAdd(tvCount);
             log.info("Sold {} televisions", tvCount);
-            log.info("Current balance is {}", balance.get());
+            log.info("Current balance is {}", currentBalance);
         }
     }
 
     private void buyNewRobot(Robot robot) {
         if (balance.get() >= 3) {
             robot.changeStatus(RobotStatus.BUY_ROBOT);
-            balance.getAndAdd(-3);
+        }
+        // balance may change to this time
+        if (balance.get() >= 3) {
+            final int currentBalance = balance.getAndAdd(-3);
             robotCount.getAndAdd(1);
             robots.add(new Robot());
             log.info("Bought a new robot. Total robot count is {}", robotCount.get());
+            log.info("Current balance is {}", currentBalance);
         }
     }
 
     private void buySixNewPanel(Robot robot) {
-        if (balance.get() < 3) {
-            log.info("Cannot buy a new panels");
-        } else {
+        if (balance.get() >= 3) {
             robot.changeStatus(RobotStatus.BUY_PANEL);
-            balance.getAndAdd(-3);
+        }
+        // balance may change to this time
+        if (balance.get() >= 3) {
+            final int currentBalance = balance.getAndAdd(-3);
             panels.addAll(List.of(
                     (Panel) ProductFactory.produce(ProductType.PANEL),
                     (Panel) ProductFactory.produce(ProductType.PANEL),
@@ -136,6 +141,7 @@ public class FactoryServiceImpl implements FactoryService {
                     (Panel) ProductFactory.produce(ProductType.PANEL)
             ));
             log.info("6 new panel is bought.");
+            log.info("Current balance is {}", currentBalance);
         }
     }
 }

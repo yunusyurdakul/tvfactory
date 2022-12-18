@@ -1,5 +1,8 @@
 package tv.factory.execution.robot.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import tv.factory.execution.product.enums.ProductType;
@@ -20,8 +23,9 @@ import java.util.Random;
  * - Buying a new robot for 3 € and 6 panel, takes 0 sec.
  */
 @Log4j2
+@Getter
+@Setter
 public class Robot {
-
     private RobotStatus currentStatus = RobotStatus.FREE;
 
     @SneakyThrows

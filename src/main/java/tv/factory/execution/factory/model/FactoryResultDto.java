@@ -9,6 +9,6 @@ import lombok.Setter;
 @Builder
 public class FactoryResultDto {
     private int finalBalance;
-    private int totalSoldTvCount;
+    private int totalTvCount;
     private int robotCount;
 }

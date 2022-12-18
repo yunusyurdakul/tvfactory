@@ -8,7 +8,7 @@ import tv.factory.execution.base.model.BaseResponse;
 
 @ControllerAdvice
 @Log4j2
-public class ExceptionHandlerController {
+public class BaseExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity handle(Exception e) {
