@@ -41,6 +41,7 @@ public class Robot {
     public Television assembleTv(Panel panel, MainBoard mainBoard) {
         this.changeStatus(RobotStatus.ASSEMBLE_TV);
         Thread.sleep(2 * 1000);
+        // %60 chance to assemble
         final int created = new Random().nextInt(10);
         if (created < 6) {
             return new Television(panel.getSerialNumber(), mainBoard.getSerialNumber());

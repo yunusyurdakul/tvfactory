@@ -13,6 +13,6 @@ public class BaseExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity handle(Exception e) {
         log.error(e.getMessage(), e);
-        return ResponseEntity.ok(BaseResponse.fail("Production failed for unknown reasons!"));
+        return ResponseEntity.ok(BaseResponse.response("Production failed for unknown reasons!"));
     }
 }

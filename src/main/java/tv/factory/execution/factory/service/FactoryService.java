@@ -1,7 +1,11 @@
 package tv.factory.execution.factory.service;
 
-import tv.factory.execution.factory.model.FactoryResultDto;
+import tv.factory.execution.base.model.BaseResponse;
 
 public interface FactoryService {
-    FactoryResultDto startProduction();
+    void startProduction();
+
+    BaseResponse result();
+
+    BaseResponse reset();
 }

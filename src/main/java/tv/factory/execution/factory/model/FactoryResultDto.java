@@ -8,7 +8,9 @@ import lombok.Setter;
 @Setter
 @Builder
 public class FactoryResultDto {
-    private int finalBalance;
-    private int totalTvCount;
+    private int balance;
+    private int televisionCount;
     private int robotCount;
+    private int panelCount;
+    private int mainBoardCount;
 }
